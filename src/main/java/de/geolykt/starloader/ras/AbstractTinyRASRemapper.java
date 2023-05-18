@@ -136,7 +136,7 @@ public abstract class AbstractTinyRASRemapper implements OutputConsumerPath.Reso
                     getLogger().error("Malformed ReversibleAccessSetter transform in line " + lineNumber + " of namespace " + namespace + ": This access cannot be applied on classes.");
                     continue;
                 }
-                line = JavaInterop.codepointToString(prefix) + scope + " " + className;
+                line = JavaInterop.codepointToString(prefix) + scope + " " + parts[1] + " " + parts[2] + " " + className;
             } else {
                 String memberName = parts[4];
                 String memberDesc = parts[5];
@@ -159,7 +159,7 @@ public abstract class AbstractTinyRASRemapper implements OutputConsumerPath.Reso
                     memberName = remapper.mapFieldName(parts[3], memberName, memberDesc);
                     memberDesc = remapper.mapDesc(memberDesc);
                 }
-                line = JavaInterop.codepointToString(prefix) + scope + " " + className + " " + memberName + " " + memberDesc;
+                line = JavaInterop.codepointToString(prefix) + scope + " " + parts[1] + " " + parts[2] + " " + className + " " + memberName + " " + memberDesc;
             }
 
             bw.write(line);
