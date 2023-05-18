@@ -19,6 +19,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Central context for reversible access setters.
+ *
+ * @since 1.0.0
  */
 public class ReversibleAccessSetterContext {
 
@@ -106,14 +108,60 @@ public class ReversibleAccessSetterContext {
      */
     public static class RASTransformFailure extends Exception {
         private static final long serialVersionUID = -2103204040204349662L;
+
+        /**
+         * Constructor.
+         *
+         * @param message The exception message
+         */
         protected RASTransformFailure(String message) {
             super(message);
         }
     }
 
+    /**
+     * The scope of a transform - that is when or whether a transform is being applied.
+     * The specification states:
+     *
+     * <p>There are times in which it does not make any sense to have a transform occur in certain
+     * environments. These environments are defined through the so called "scopes".
+     * The standard RAS specification defines following scopes:
+     *
+     * <ul>
+     *   <li>a or all: The transform should always occur.</li>
+     *   <li>b or build: The transform should only occur at build/compile-time as well as
+     *   (if applicable) in the development environment.</li>
+     *   <li>r or runtime: The transform should only occur at runtime.</li>
+     * </ul>
+     *
+     * <p>Other dialects may define different scopes. This may be beneficial if a separation between
+     * client and server is required. However, as galimulator does not make use of a server/client
+     * system it makes little sense for the standard dialect to support clientside only and
+     * serverside only transforms.
+     *
+     * @since 1.0.0
+     */
     public enum RASTransformScope {
+        /**
+         * a or all: The transform should always occur
+         *
+         * @since 1.0.0
+         */
         ALL,
+
+        /**
+         * b or build: The transform should only occur at build/compile-time as well as
+         * (if applicable) in the development environment.
+         *
+         * @since 1.0.0
+         */
         BUILDTIME,
+
+        /**
+         * r or runtime: The transform should only occur at runtime.
+         *
+         * @since 1.0.0
+         */
         RUNTIME;
     }
 
@@ -140,6 +188,16 @@ public class ReversibleAccessSetterContext {
     @NotNull
     private final RASTransformScope scope;
 
+    /**
+     * Constructor for a new reversible access setter context.
+     *
+     * @param activeScope The scope to use for this context. Only transforms that are within this scope are applied,
+     *                    all others are discarded. May not be {@link RASTransformScope#ALL}.
+     * @param forcedSilence True to silence all transformation failures, even if the transform makes use of the
+     *                      FAIL_HARD ('!') flag. That is all transformations are considered to have the FAIL_SOFT ('@')
+     *                      flag.
+     * @since 1.0.0
+     */
     public ReversibleAccessSetterContext(@NotNull RASTransformScope activeScope, boolean forcedSilence) {
         if (activeScope == RASTransformScope.ALL) {
             throw new IllegalArgumentException("RASTransformScope may not be 'ALL'.");
@@ -148,6 +206,17 @@ public class ReversibleAccessSetterContext {
         this.forcedSilence = forcedSilence;
     }
 
+    /**
+     * Apply all relevant transforms known to this {@link ReversibleAccessSetterContext} to a given {@link ClassNode}.
+     *
+     * <p>Note: For performance's sake it is advisable to run {@link #isTarget(String)} before running this method.
+     * The only exception is if the node is used for binding purposes (i.e. in a development environment) or for
+     * decompilation, at which point this method <b>must</b> be run indiscriminately.
+     *
+     * @param node The {@link ClassNode} to apply transforms to.
+     * @throws RASTransformFailure Exception thrown if a transform which has the FAIL_HARD flag set failed to apply.
+     * @since 1.0.0
+     */
     public void accept(@NotNull ClassNode node) throws RASTransformFailure {
         RASClassContext ctx = this.classes.get(node.name);
         if (ctx != null) {
@@ -166,10 +235,37 @@ public class ReversibleAccessSetterContext {
         }
     }
 
+    /**
+     * Check whether the given class is subject to one or more reversible access
+     * transforms.
+     *
+     * <p>This method assumes that the class is not an inner class itself and that it is also not an outer class.
+     * It also assumes that it isn't using an inner class is any other shape or form. This assumption is not of
+     * relevance at runtime, but when classes that were applied with RAS transforms are being decompiled, the inner
+     * accesses might get skewed. The same applies to the eclipse compiler, which trusts the inner class access more
+     * than the actual class access.
+     *
+     * @param internalName The internal name of the class. It should look something like "org/example/Outer$Inner".
+     * @return True if the class is subject to a transform, false.
+     * @since 1.0.0
+     */
     public boolean isTarget(@NotNull String internalName) {
         return this.classes.containsKey(internalName);
     }
 
+    /**
+     * Read a reversible access setter from a given {@link BufferedReader} as an input source.
+     * The reversible access setter is put under a given namespace. Namespaces are an implementation-specific
+     * feature that can be chosen at free will and is meant to aid the debugging of RAS transforms.
+     * Outside of that, namespaces do not affect the flow of the application.
+     *
+     * @param namespace The identifying namespace of the transform.
+     * @param reader The reader from which the reversible access setter is read from.
+     * @param reversed True to reverse the RAS, false to apply it normally.
+     * @throws IOException Exception that is thrown when the RAS is malformed or when the underlying
+     * reader thrown an {@link IOException} itself.
+     * @since 1.0.0
+     */
     public void read(@NotNull String namespace, @NotNull BufferedReader reader, boolean reversed) throws IOException {
         String header = reader.readLine();
         int lineNumber = 1;

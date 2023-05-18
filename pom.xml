@@ -6,8 +6,14 @@
     <artifactId>reversible-access-setter</artifactId>
     <version>1.0.0</version>
     <name>Reversible Access Setter</name>
-    <description>Various classes for interfacing with RAS files</description>
+    <description>Various classes for interfacing with reversible access setter files</description>
     <inceptionYear>2023</inceptionYear>
+    <url>https://github.com/Starloader-project/Reversible-access-setter</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gpg.skip>true</gpg.skip>
+    </properties>
 
     <repositories>
         <repository>
@@ -62,29 +68,28 @@
             <id>geolykt</id>
             <email>mail@geolykt.de</email>
             <name>Geolykt</name>
-            <organization>N/A</organization>
             <timezone>+1</timezone>
         </developer>
     </developers>
 
+    <scm>
+        <connection>scm:git:git://github.com/starloader-project/reversible-access-setter.git</connection>
+        <developerConnection>scm:git:ssh://github.com:starloader-project/reversible-access-setter.git</developerConnection>
+        <url>http://github.com/starloader-project/reversible-access-setter/tree/main</url>
+    </scm>
+
     <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
         <repository>
-            <id>geolykt-maven-ftp</id>
-            <!-- This is the developer connection. The actual repository 
-                is located under https://geolykt.de/maven/ -->
-            <url>ftp://geolykt.de/geolykt.de/public_html/maven/</url>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
 
     <build>
-        <extensions>
-            <!-- Enabling the use of FTP: https://mvnrepository.com/artifact/org.apache.maven.wagon/wagon-ftp -->
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ftp</artifactId>
-                <version>3.5.3</version>
-            </extension>
-        </extensions>
         <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>
@@ -147,6 +152,52 @@
                                 <compileSourceRoot>${project.basedir}/src/main/java11</compileSourceRoot>
                             </compileSourceRoots>
                             <multiReleaseOutput>true</multiReleaseOutput>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-source-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-javadoc-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-gpg-plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <keyname>${gpg.keyname}</keyname>
                         </configuration>
                     </execution>
                 </executions>

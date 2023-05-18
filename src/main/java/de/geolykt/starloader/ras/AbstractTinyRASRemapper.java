@@ -16,12 +16,42 @@ import net.fabricmc.tinyremapper.OutputConsumerPath;
 import net.fabricmc.tinyremapper.TinyRemapper;
 import net.fabricmc.tinyremapper.api.TrRemapper;
 
+/**
+ * An implementation of {@link OutputConsumerPath.ResourceRemapper} that remaps any reversible
+ * access setter files. However, the reversible access setter itself is not applied to the
+ * classes that need to be remapped.
+ *
+ *  <p>This class does not define {@link OutputConsumerPath.ResourceRemapper#canTransform(TinyRemapper, Path)}
+ *  and thus in itself does not provide any logic to know whether a file is a reversible access transformer.
+ *  This decision must be performed by subclasses.
+ *
+ * @since 1.0.0
+ */
 public abstract class AbstractTinyRASRemapper implements OutputConsumerPath.ResourceRemapper {
 
+    /**
+     * Obtain the {@link Logger} instance that should be used to log not completely fatal
+     * warning messages. This includes instances where the access setter file is malformed,
+     * but the line is being skipped in order to enable a minimum amount of usability.
+     *
+     * @return The used {@link Logger} instance
+     * @since 1.0.0
+     */
     protected Logger getLogger() {
         return LoggerFactory.getLogger(AbstractTinyRASRemapper.class);
     }
 
+    /**
+     * Remap a RAS file, reading the source from a given {@link BufferedReader} and writing the remapped contents
+     * to the given {@link BufferedWriter}.
+     * @param reader The {@link BufferedReader} instance to read the RAS from
+     * @param bw The {@link BufferedWriter} instance to write the remapped RAS file to
+     * @param namespace The namespace name of the RAS file to use for logging slightly malformed lines.
+     * @param tinyRemapper The remapper instance to use to remap classes and class member references.
+     * @throws IOException Exception that is thrown if the underlying reader or writer threw an {@link IOException}
+     * or if the read RAS file has a malformed header.
+     * @since 1.0.0
+     */
     protected void remapRAS(@NotNull BufferedReader reader, BufferedWriter bw, String namespace, TinyRemapper tinyRemapper) throws IOException {
         TrRemapper remapper = tinyRemapper.getEnvironment().getRemapper();
         String header = reader.readLine();
